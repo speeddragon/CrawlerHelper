@@ -30,7 +30,7 @@
 		 * @param $path Cookie filename path
 		 */
 		public function setCookie($path) {
-			$_cookie = $path;
+			$this->_cookie = $path;
 
 			if (!file_exists($path)) {
 				// Trying to create the cookie file
@@ -45,7 +45,7 @@
 		}
 
 		public function getCookie() {
-			return $_cookie;
+			return $this->_cookie;
 		}
 
 		public function setTimeout($timeout) {
@@ -59,6 +59,10 @@
 		 * @return string HTML Code
 		 */
 		public static function httpSimpleRequest($url) {
+			if (!extension_loaded('curl')) {
+			    echo "You need to load/activate the curl extension.";
+			}
+			
 			// create curl resource 
 	        $ch = curl_init(); 
 
@@ -86,6 +90,10 @@
 		 * @return string HTML Code
 		 */
 		public function httpRequest($url, $post = false, $referer = false) {
+			if (!extension_loaded('curl')) {
+			    echo "You need to load/activate the curl extension.";
+			}
+
 			$ch = curl_init(); 
 			curl_setopt($ch, CURLOPT_URL, $url);
 		
@@ -100,12 +108,25 @@
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
 			
+			// Ignore SSL validation
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
 			if ($referer) {
 				curl_setopt($ch, CURLOPT_REFERER, $referer);
 			}
-		
 
             if ($this->getCookie()) {
+            	if (!file_exists($this->getCookie())) {
+				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
+				    exit;
+				}
+
+				if (!is_writable($this->getCookie())) {
+					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
+				    exit;	
+				}
+
 			    curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
 			    curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());
             }
@@ -129,7 +150,11 @@
 		 * @param $filename Filename 
 		 * @param $override Flag to override filename
 		 */
-		public function downloadFile($url, $filename, $override) {
+		public function downloadFile($url, $filename, $override = false) {
+			if (!extension_loaded('curl')) {
+			    echo "You need to load/activate the curl extension.";
+			}
+
 			$ch = curl_init ($url);
 
 	        curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -137,7 +162,21 @@
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
 
+			// Ignore SSL validation
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
         	if($this->getCookie()) {
+        		if (!file_exists($this->getCookie())) {
+				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
+				    exit;
+				}
+
+				if (!is_writable($this->getCookie())) {
+					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
+				    exit;	
+				}
+
 				curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
 				curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());	    	
 			}
@@ -161,6 +200,10 @@
 			}
 
 			return $contentType;
+		}
+
+		public function getTimeout() {
+			return $this->_timeout;
 		}
 	}
 
