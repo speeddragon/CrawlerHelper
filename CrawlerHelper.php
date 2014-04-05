@@ -88,7 +88,7 @@
 		 * @param $url URL
 		 * @param $post POST data (default is false)
 		 * @param $referer Referer
-		 * @return string HTML Code
+		 * @return HttpResponse HTML Code
 		 */
 		public function httpRequest($url, $post = false, $referer = false) {
 			if (!extension_loaded('curl')) {
