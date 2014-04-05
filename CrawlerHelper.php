@@ -1,4 +1,5 @@
 <?php
+	require_once('HttpResponse.php');
 
 	class CrawlerHelper {
 		protected $_cookie;
@@ -116,31 +117,20 @@
 				curl_setopt($ch, CURLOPT_REFERER, $referer);
 			}
 
-            if ($this->getCookie()) {
-            	if (!file_exists($this->getCookie())) {
-				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
-				    exit;
-				}
-
-				if (!is_writable($this->getCookie())) {
-					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
-				    exit;	
-				}
-
-			    curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
-			    curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());
-            }
+            $this->checkCookie($ch);
 				      		
 			curl_setopt($ch, CURLOPT_TIMEOUT, $this->getTimeout());
 
 			// If response come with GZIP will convert to normal text
 			curl_setopt($ch, CURLOPT_ENCODING, '');
 
-			$result = curl_exec ($ch);
+			$httpResponse = new HttpResponse();
+			$httpResponse->setHtml( curl_exec ($ch) );
+			$httpResponse->setHttpCode( curl_getinfo($ch, CURLINFO_HTTP_CODE) );
 		
-			curl_close ($ch); 
+			curl_close ($ch);
 		
-			return $result;
+			return $httpResponse;
 		}
 
 		/**
@@ -150,12 +140,15 @@
 		 * @param $filename Filename 
 		 * @param $override Flag to override filename
 		 */
-		public function downloadFile($url, $filename, $override = false) {
+		public function downloadFile($url, $filename, $override = false, $referer = false) {
 			if (!extension_loaded('curl')) {
 			    echo "You need to load/activate the curl extension.";
+			    die;
 			}
 
 			$ch = curl_init ($url);
+
+			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.4) Gecko/20030624 Netscape/7.1 (ax)");
 
 	        curl_setopt($ch, CURLOPT_HEADER, 0);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -166,20 +159,11 @@
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-        	if($this->getCookie()) {
-        		if (!file_exists($this->getCookie())) {
-				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
-				    exit;
-				}
-
-				if (!is_writable($this->getCookie())) {
-					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
-				    exit;	
-				}
-
-				curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
-				curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());	    	
+			if ($referer) {
+				curl_setopt($ch, CURLOPT_REFERER, $referer);
 			}
+
+        	$this->checkCookie($ch);
 			
 			$data = curl_exec($ch);
 
@@ -205,6 +189,50 @@
 		public function getTimeout() {
 			return $this->_timeout;
 		}
+
+		/**
+		 * Get HTTP Code
+		 *
+		 * @param $url URL
+		 * @return HTTP Code
+		 */
+		public function checkHttpCode($url) {
+	        $ch = curl_init($url);
+
+	        curl_setopt($ch,  CURLOPT_RETURNTRANSFER, TRUE);
+
+	        $this->checkCookie($ch);
+
+	        $response = curl_exec($ch);
+	        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+	        curl_close($ch);
+
+	        return $httpCode;
+	    }		
+
+	    /**
+	     * Check and setup cookies
+	     * @param $ch 
+	     */
+	    private function checkCookie(&$ch) {
+	    	if($this->getCookie()) {
+        		if (!file_exists($this->getCookie())) {
+				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
+				    exit;
+				}
+
+				if (!is_writable($this->getCookie())) {
+					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
+				    exit;	
+				}
+
+				curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
+				curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());	    	
+			}
+
+			return true;
+	    }
 	}
 
 ?>
