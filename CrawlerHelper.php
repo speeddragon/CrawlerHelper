@@ -5,6 +5,9 @@
 		protected $_cookie;
 		protected $_timeout = 30;
 
+		protected $_proxyHost;
+		protected $_proxyPort;
+
 		# ======================= Normal Helpers =======================
 
 		public static function getTimestamp() {
@@ -73,6 +76,12 @@
 	        // Return the transfer as a string 
 	        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
 
+	        // Proxy
+	        if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
+				curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 0);
+				curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
+	        }
+
 	        // $output contains the output string 
 	        $output = curl_exec($ch); 
 
@@ -98,6 +107,12 @@
 			$ch = curl_init(); 
 			curl_setopt($ch, CURLOPT_URL, $url);
 		
+			// Proxy
+			if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
+				curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 0);
+				curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
+	        }
+
 			if ($post)
 			{
 				curl_setopt($ch, CURLOPT_POST, 1); 
@@ -232,6 +247,11 @@
 			}
 
 			return true;
+	    }
+
+	    public function setProxy($host, $port) {
+	    	$this->_proxyHost = $host;
+	    	$this->_proxyPort = $port;
 	    }
 	}
 
