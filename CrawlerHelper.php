@@ -8,6 +8,11 @@
 		protected $_proxyHost;
 		protected $_proxyPort;
 
+		protected $_user;
+		protected $_pass;
+
+		protected $_httpHeaders;
+
 		# ======================= Normal Helpers =======================
 
 		public static function getTimestamp() {
@@ -54,6 +59,30 @@
 
 		public function setTimeout($timeout) {
 			$this->_timeout = $timeout;
+		}
+
+		public function getUser() {
+			return $this->_user;
+		}
+
+		public function setUser($user) {
+			$this->_user = $user;
+		}
+
+		public function getPass() {
+			return $this->_pass;
+		}
+
+		public function setPass($pass) {
+			$this->_pass = $pass;
+		}
+
+		public function getHttpHeaders() {
+			return $this->_httpHeaders;
+		}
+
+		public function setHttpHeaders($httpHeaders) {
+			$this->_httpHeaders = $httpHeaders;
 		}
 
 		/**
@@ -123,6 +152,16 @@
 			
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+
+			curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+			// Authentication on requests
+			if ($this->getUser() && $this->getPass()) {
+				curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
+				curl_setopt($ch, CURLOPT_USERPWD, $this->getUser() . ":" . $this->getPass());
+			}
+
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHttpHeaders());
 			
 			// Ignore SSL validation
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
@@ -169,6 +208,14 @@
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+
+			// Authentication on requests
+			if ($this->getUser() && $this->getPass()) {
+				curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
+				curl_setopt($ch, CURLOPT_USERPWD, $this->getUser() . ":" . $this->getPass());
+			}
+
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHttpHeaders());
 
 			// Ignore SSL validation
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
