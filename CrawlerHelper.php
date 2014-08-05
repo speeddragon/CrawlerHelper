@@ -11,7 +11,7 @@
 		protected $_user;
 		protected $_pass;
 
-		protected $_httpHeaders;
+		protected $_httpHeaders = array();
 
 		# ======================= Normal Helpers =======================
 
