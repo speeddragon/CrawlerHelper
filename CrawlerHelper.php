@@ -173,7 +173,9 @@
 
             $this->checkCookie($ch);
 				      		
-			curl_setopt($ch, CURLOPT_TIMEOUT, $this->getTimeout());
+			if ($this->getTimeout() !== false) {
+				curl_setopt($ch, CURLOPT_TIMEOUT, $this->getTimeout());
+			}
 
 			// If response come with GZIP will convert to normal text
 			curl_setopt($ch, CURLOPT_ENCODING, '');
