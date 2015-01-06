@@ -91,7 +91,7 @@
 		 * @param $url URL
 		 * @return string HTML Code
 		 */
-		public static function httpSimpleRequest($url) {
+		public function httpSimpleRequest($url) {
 			if (!extension_loaded('curl')) {
 			    echo "You need to load/activate the curl extension.";
 			}
@@ -111,13 +111,13 @@
 				curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
 	        }
 
-	        // $output contains the output string 
-	        $output = curl_exec($ch); 
-
-	        // close curl resource to free up system resources 
-	        curl_close($ch); 
-
-	        return $output;
+	        $httpResponse = new HttpResponse();
+			$httpResponse->setHtml( curl_exec ($ch) );
+			$httpResponse->setHttpCode( curl_getinfo($ch, CURLINFO_HTTP_CODE) );
+		
+			curl_close ($ch);
+		
+			return $httpResponse;
 		}
 
 		/**
