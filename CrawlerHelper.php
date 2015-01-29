@@ -2,7 +2,8 @@
 	require_once('HttpResponse.php');
 
 	class CrawlerHelper {
-		protected $_cookie;
+        protected $_cookieValues;
+        protected $_cookiePath;
 		protected $_timeout = 30;
 
 		protected $_proxyHost;
@@ -19,13 +20,14 @@
 	        echo date("Y-m-d H:i:s", time()) . ' ';
 	    }
 
-	    /**
-	     * Convert chars from Russian to UTF8
-	     *
-	     * In order to parse russian characters we need to convert the encoding.
-	     * 
-	     * @param $html HTML code
-	     */
+        /**
+         * Convert chars from Russian to UTF8
+         *
+         * In order to parse russian characters we need to convert the encoding.
+         *
+         * @param $html string HTML code
+         * @return string
+         */
 	    public static function convertFromRussianToUtf8($html) {
 	        return iconv('windows-1251', 'utf-8', $html);
 	    }
@@ -33,28 +35,53 @@
 
 		# ======================= cURL Helpers =======================
 
-		/**
-		 * Set Cookie Path
-		 *
-		 * @param $path Cookie filename path
-		 */
-		public function setCookie($path) {
-			$this->_cookie = $path;
+        /**
+         * @return array
+         */
+        public function getCookieValues()
+        {
+            return $this->_cookieValues;
+        }
+
+        /**
+         * @param array $cookieValues
+         */
+        public function setCookieValues($cookieValues)
+        {
+            $this->_cookieValues = $cookieValues;
+        }
+
+        public function addCookieValue($key, $value) {
+            if (!isset($this->_cookieValues)) {
+                $this->_cookieValues = array();
+            }
+
+            $this->_cookieValues[$key] = $value;
+        }
+
+        /**
+         * Set Cookie Path
+         *
+         * @param $path string Cookie filename path
+         * @throws Exception
+         */
+		public function setCookiePath($path) {
+			$this->_cookiePath = $path;
 
 			if (!file_exists($path)) {
 				// Trying to create the cookie file
 				$cookieHandle = fopen($path, 'w');
 				
 				if (!$cookieHandle) {
-					throw new FileNotFound("Can't create file: " . $path);
+					throw new Exception("Can't create file: " . $path);
 				} else {
 					fclose($cookieHandle);
 				}
 			}
 		}
 
-		public function getCookie() {
-			return $this->_cookie;
+		public function getCookiePath() {
+			return $this->_cookiePath;
 		}
 
 		public function setTimeout($timeout) {
@@ -88,7 +115,7 @@
 		/**
 		 * HTTP Simple Request
 		 *
-		 * @param $url URL
+		 * @param $url string URL
 		 * @return string HTML Code
 		 */
 		public function httpSimpleRequest($url) {
@@ -120,14 +147,15 @@
 			return $httpResponse;
 		}
 
-		/**
-		 * HTTP Request
-		 *
-		 * @param $url URL
-		 * @param $post POST data (default is false)
-		 * @param $referer Referer
-		 * @return HttpResponse HTML Code
-		 */
+        /**
+         * HTTP Request
+         *
+         * @param $url string URL
+         * @param bool|string $post string POST data (default is false)
+         * @param bool|string $referer string Referer
+         * @return HttpResponse HTML Code
+         * @throws Exception
+         */
 		public function httpRequest($url, $post = false, $referer = false) {
 			if (!extension_loaded('curl')) {
 			    echo "You need to load/activate the curl extension.";
@@ -180,7 +208,19 @@
 			// If response come with GZIP will convert to normal text
 			curl_setopt($ch, CURLOPT_ENCODING, '');
 
-			$httpResponse = new HttpResponse();
+            // Add cookie values
+            if (is_array($this->_cookieValues)) {
+                $cookieValuesString = "";
+
+                foreach($this->_cookieValues as $cookieKey => $cookieValue) {
+                    $cookieValuesString .= $cookieValuesString . $cookieKey . '=' . $cookieValue . '; ';
+                }
+
+                curl_setopt($ch, CURLOPT_COOKIE, $cookieValuesString);
+            }
+
+
+            $httpResponse = new HttpResponse();
 			$httpResponse->setHtml( curl_exec ($ch) );
 			$httpResponse->setHttpCode( curl_getinfo($ch, CURLINFO_HTTP_CODE) );
 		
@@ -189,13 +229,15 @@
 			return $httpResponse;
 		}
 
-		/**
-		 * Download file
-		 *
-		 * @param $url URL path of the file
-		 * @param $filename Filename 
-		 * @param $override Flag to override filename
-		 */
+        /**
+         * Download file
+         *
+         * @param $url string URL path of the file
+         * @param $filename string Filename
+         * @param $override bool|string Flag to override filename
+         * @param $referer bool|string Referer
+         * @return string
+         */
 		public function downloadFile($url, $filename, $override = false, $referer = false) {
 			if (!extension_loaded('curl')) {
 			    echo "You need to load/activate the curl extension.";
@@ -257,8 +299,8 @@
 		/**
 		 * Get HTTP Code
 		 *
-		 * @param $url URL
-		 * @return HTTP Code
+		 * @param string $url URL
+		 * @return int HTTP Code
 		 */
 		public function checkHttpCode($url) {
 	        $ch = curl_init($url);
@@ -267,32 +309,32 @@
 
 	        $this->checkCookie($ch);
 
-	        $response = curl_exec($ch);
+	        curl_exec($ch);
 	        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 	        curl_close($ch);
 
 	        return $httpCode;
-	    }		
+	    }
 
-	    /**
-	     * Check and setup cookies
-	     * @param $ch 
-	     */
+        /**
+         * Check and setup cookies
+         * @param resource $ch
+         * @return bool
+         * @throws Exception
+         */
 	    private function checkCookie(&$ch) {
-	    	if($this->getCookie()) {
-        		if (!file_exists($this->getCookie())) {
-				    echo 'Cookie file missing: ' . $this->getCookie() . "\n"; 
-				    exit;
+	    	if($this->getCookiePath()) {
+        		if (!file_exists($this->getCookiePath())) {
+				    throw new Exception('Cookie file missing: ' . $this->getCookiePath() );
 				}
 
-				if (!is_writable($this->getCookie())) {
-					echo 'Cookie file not writable: ' . $this->getCookie() . "\n";
-				    exit;	
+				if (!is_writable($this->getCookiePath())) {
+					throw new Exception('Cookie file not writable: ' . $this->getCookiePath() );
 				}
 
-				curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookie());
-				curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookie());	    	
+				curl_setopt($ch, CURLOPT_COOKIEFILE, $this->getCookiePath());
+				curl_setopt($ch, CURLOPT_COOKIEJAR, $this->getCookiePath());
 			}
 
 			return true;
