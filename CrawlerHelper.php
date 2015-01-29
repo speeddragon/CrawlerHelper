@@ -2,6 +2,8 @@
 	require_once('HttpResponse.php');
 
 	class CrawlerHelper {
+        protected $_userAgent;
+
         protected $_cookieValues;
         protected $_cookiePath;
 		protected $_timeout = 30;
@@ -13,6 +15,11 @@
 		protected $_pass;
 
 		protected $_httpHeaders = array();
+
+        public function __construct() {
+            // Default settings
+            $this->setUserAgent("Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.4) Gecko/20030624 Netscape/7.1 (ax)");
+        }
 
 		# ======================= Normal Helpers =======================
 
@@ -32,8 +39,24 @@
 	        return iconv('windows-1251', 'utf-8', $html);
 	    }
 
-
 		# ======================= cURL Helpers =======================
+
+
+        /**
+         * @return mixed
+         */
+        public function getUserAgent()
+        {
+            return $this->_userAgent;
+        }
+
+        /**
+         * @param mixed $userAgent
+         */
+        public function setUserAgent($userAgent)
+        {
+            $this->_userAgent = $userAgent;
+        }
 
         /**
          * @return array
@@ -176,7 +199,7 @@
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $post); 
 			}
 			
-			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.4) Gecko/20030624 Netscape/7.1 (ax)");
+			curl_setopt($ch, CURLOPT_USERAGENT, $this->getUserAgent());
 			
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
@@ -246,7 +269,7 @@
 
 			$ch = curl_init ($url);
 
-			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.4) Gecko/20030624 Netscape/7.1 (ax)");
+			curl_setopt($ch, CURLOPT_USERAGENT, $this->getUserAgent());
 
 	        curl_setopt($ch, CURLOPT_HEADER, 0);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
