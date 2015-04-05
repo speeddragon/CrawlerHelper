@@ -13,6 +13,8 @@
 
 		protected $_httpHeaders = array();
 
+		protected $_responseHeaders = false;
+
 		# ======================= Normal Helpers =======================
 
 		public static function getTimestamp() {
@@ -86,6 +88,22 @@
 		}
 
 		/**
+         * @return boolean
+         */
+        public function getResponseHeaders()
+        {
+            return $this->_responseHeaders;
+        }
+
+        /**
+         * @param boolean $responseHeaders
+         */
+        public function setResponseHeaders($responseHeaders)
+        {
+            $this->_responseHeaders = $responseHeaders;
+        }
+
+		/**
 		 * HTTP Simple Request
 		 *
 		 * @param $url URL
@@ -135,6 +153,7 @@
 
 			$ch = curl_init(); 
 			curl_setopt($ch, CURLOPT_URL, $url);
+			curl_setopt($ch, CURLOPT_HEADER, $this->getResponseHeaders());
 		
 			// Proxy
 			if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
