@@ -41,6 +41,16 @@
 	        return iconv('windows-1251', 'utf-8', $html);
 	    }
 
+        /**
+         * Check if a string is JSON
+         * @param $string
+         * @return bool
+         */
+        function isJson($string) {
+            json_decode($string);
+            return (json_last_error() == JSON_ERROR_NONE);
+        }
+
 		# ======================= cURL Helpers =======================
 
 
@@ -212,11 +222,22 @@
 				curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
 	        }
 
-			if ($post)
-			{
-				curl_setopt($ch, CURLOPT_POST, 1); 
-				curl_setopt($ch, CURLOPT_POSTFIELDS, $post); 
-			}
+            if ($post !== false) {
+                if (!$this->isJson($post)) {
+                    curl_setopt($ch, CURLOPT_POST, 1);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+                } else {
+                    // Send POST request in JSON
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+
+                    // Add 2 new headers
+                    $httpHeaders = $this->getHttpHeaders();
+                    $httpHeaders['Content-Type'] = 'application/json';
+                    $httpHeaders['Content-Length'] = strlen($post);
+                    $this->setHttpHeaders($httpHeaders);
+                }
+            }
 			
 			curl_setopt($ch, CURLOPT_USERAGENT, $this->getUserAgent());
 			
@@ -312,6 +333,10 @@
 			}
 
         	$this->checkCookie($ch);
+
+        	if ($this->getTimeout() !== false) {
+				curl_setopt($ch, CURLOPT_TIMEOUT, $this->getTimeout());
+			}
 			
 			$data = curl_exec($ch);
 
