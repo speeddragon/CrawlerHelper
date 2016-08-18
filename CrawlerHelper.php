@@ -437,6 +437,12 @@ class CrawlerHelper
         return true;
     }
 
+    /**
+     * Setup proxy
+     *
+     * @param $host string Proxy Host
+     * @param $port int Proxy Port
+     */
     public function setProxy($host, $port)
     {
         $this->_proxyHost = $host;
