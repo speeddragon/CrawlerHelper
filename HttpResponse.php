@@ -18,4 +18,13 @@
 		public function setHttpCode($httpCode) {
 		    $this->_httpCode = $httpCode;
 		}
+
+        public function getJson() {
+            json_decode($this->_html);
+            if (json_last_error() == JSON_ERROR_NONE) {
+                return $this->_html;
+            } else {
+                return false;
+            }
+        }
 	}
