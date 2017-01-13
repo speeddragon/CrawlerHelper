@@ -12,6 +12,7 @@ class CrawlerHelper
 
     protected $_proxyHost;
     protected $_proxyPort;
+    protected $_proxyType;
 
     protected $_user;
     protected $_pass;
@@ -206,10 +207,7 @@ class CrawlerHelper
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
         // Proxy
-        if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
-            curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 0);
-            curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
-        }
+        $this->configureProxy($ch);
 
         $httpResponse = new HttpResponse();
         $httpResponse->setHtml(curl_exec($ch));
@@ -240,10 +238,7 @@ class CrawlerHelper
         curl_setopt($ch, CURLOPT_HEADER, $this->getResponseHeaders());
 
         // Proxy
-        if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
-            curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 0);
-            curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
-        }
+        $this->configureProxy($ch);
 
         if ($post) {
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -329,6 +324,9 @@ class CrawlerHelper
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+
+        // Proxy
+        $this->configureProxy($ch);
 
         // Authentication on requests
         if ($this->getUser() && $this->getPass()) {
@@ -447,6 +445,27 @@ class CrawlerHelper
     {
         $this->_proxyHost = $host;
         $this->_proxyPort = $port;
+    }
+
+    public function setProxyType($proxyType) {
+        $this->_proxyType = $proxyType;
+    }
+
+    /**
+     * Setup proxy configuration
+     * @param  [type] $ch [description]
+     * @return [type]     [description]
+     */
+    public function configureProxy(&$ch) {
+        if (isset($this->_proxyPort) && isset($this->_proxyHost)) {
+            if (isset($this->_proxyType)) {
+                curl_setopt($ch, CURLOPT_PROXYTYPE, $this->_proxyType);
+            }
+            curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 1);
+            curl_setopt($ch, CURLOPT_PROXY, $this->_proxyHost . ':' . $this->_proxyPort);
+        }
+
+        return true;
     }
 }
 
