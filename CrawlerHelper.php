@@ -101,7 +101,7 @@ class CrawlerHelper
     {
         $this->_cookiePath = $path;
 
-        if (!file_exists($path)) {
+        if ($path && !file_exists($path)) {
             // Trying to create the cookie file
             $cookieHandle = fopen($path, 'w');
 
